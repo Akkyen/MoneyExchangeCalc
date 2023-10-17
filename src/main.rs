@@ -14,12 +14,6 @@ struct CurrencyJsonDataset {
     pub eur: HashMap<String, f32>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct CurrencyTuple {
-    pub currency_country_code: String,
-    pub conversion_rate: f64,
-}
-
 fn main() -> Result<()>
 {
     let body = reqwest::blocking::get("https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/eur.json").unwrap().text().unwrap();
