@@ -18,7 +18,7 @@ fn main() -> Result<()>
 {
     let body = reqwest::blocking::get("https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/eur.json").unwrap().text().unwrap();
 
-    let data = currency_json_parsing(body)?;
+    let data = currency_json_parsing(&*body)?;
 
     loop
     {
@@ -107,9 +107,9 @@ fn main() -> Result<()>
     }
 }
 
-fn currency_json_parsing(data: String) -> Result<Box<CurrencyJsonDataset>>
+fn currency_json_parsing(data: &str) -> Result<Box<CurrencyJsonDataset>>
 {
-    let cur_data_set: CurrencyJsonDataset  = serde_json::from_str(&*data)?;
+    let cur_data_set: CurrencyJsonDataset  = serde_json::from_str(data)?;
     Ok(Box::new(cur_data_set))
 }
 
