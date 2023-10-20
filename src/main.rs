@@ -31,6 +31,7 @@ fn main() -> Result<()> {
         println!("Mit der Eingabe von exit kann das Programm jederzeit beendet werden.");
         println!("Die verwendeten Kurse sind vom {} Uhrzeit unbekannt!", data.date.format("%d.%m.%Y"));
 
+        //To be converted Euro Amount - Loop
         loop {
             println!();
             // Prompting user for the amount in EUR they want to convert
@@ -58,10 +59,10 @@ fn main() -> Result<()> {
             } else {}
         }
 
-        // Prompting user for the target currency code
-
+        //Currency Code - Loop
         loop {
             println!();
+            // Prompting user for the target currency code
             println!("Bitte gibt den Code der Währung ein in die konvertiert werden soll: ");
 
             code = String::new();
