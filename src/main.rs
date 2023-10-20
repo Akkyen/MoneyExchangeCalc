@@ -28,14 +28,14 @@ fn main() -> Result<()> {
         let mut value_str = String::new();
         let mut code = String::new();
 
-        println!("Mit der Eingabe von exit kann das Programm jederzeit beendet werden.");
-        println!("Die verwendeten Kurse sind vom {} Uhrzeit unbekannt!", data.date.format("%d.%m.%Y"));
+        println!("With the input of \"exit\", the program can be terminated at any time.");
+        println!("The exchange rates used are from {} (time unknown)!", data.date.format("%d.%m.%Y"));
 
         //To be converted Euro Amount - Loop
         loop {
             println!();
             // Prompting user for the amount in EUR they want to convert
-            println!("Bitte gibt die Menge an Euro ein, die du konvertieren möchtest: ");
+            println!("Please enter the amount in Euros you want to convert: ");
 
             value_str = String::new();
 
@@ -50,7 +50,7 @@ fn main() -> Result<()> {
                 value = match value_str.parse() {
                     Ok(v) => v,
                     Err(_) => {
-                        println!("Dies ist kein Integer oder Float!");
+                        println!("This is not an integer or float!");
                         continue;
                     }
                 };
@@ -63,7 +63,7 @@ fn main() -> Result<()> {
         loop {
             println!();
             // Prompting user for the target currency code
-            println!("Bitte gibt den Code der Währung ein in die konvertiert werden soll: ");
+            println!("Please enter the code of the currency you want to convert to: ");
 
             code = String::new();
 
@@ -84,7 +84,7 @@ fn main() -> Result<()> {
         println!();
 
         // Displaying the conversion result to the user
-        println!("Du erhälst für {} Euro {} {}!", value_str, value * data.eur[&code], code);
+        println!("You will receive {} {} for {} Euros!", value_str, value * data.eur[&code], code);
         pause();
 
         // Clearing the console screen
@@ -101,7 +101,7 @@ fn currency_json_parsing(data: &str) -> Result<Box<CurrencyJsonDataset>> {
 
 // Function to pause the console until the user presses a key
 fn pause() {
-    write!(stdout(), "Drücken Sie eine beliebige Taste, um fortzufahren...").unwrap();
+    write!(stdout(), "Press any key to continue...").unwrap();
     stdout().flush().unwrap();
     let _ = stdin().read(&mut [0u8]).unwrap();
 }
