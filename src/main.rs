@@ -1,114 +1,123 @@
+use std::collections::HashMap;
+use std::io::{Read, stdin, Write};
+
 // Importing necessary libraries and modules
 use chrono::NaiveDate;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::Result;
-use std::collections::HashMap;
-use std::io::{Read, stdin, stdout, Write};
-use std::process::exit;
+
+mod utils;
 
 // Struct definition for deserializing the JSON data from the currency API
-#[derive(Debug, Serialize, Deserialize)]
-struct CurrencyJsonDataset {
-    // Date of the currency data
-    pub date: NaiveDate,
-    // Mapping of currency codes to their exchange rate against EUR
-    pub eur: HashMap<String, f32>,
+#[derive(Debug, Deserialize)]
+pub struct CurrencyJsonDataset {
+	// Date of the currency data
+	pub date: NaiveDate,
+	// Mapping of currency codes to their exchange rate against EUR
+	#[serde(flatten)]
+	pub exchange: HashMap<String, HashMap<String, f32>>,
 }
 
 fn main() -> Result<()> {
-    // Fetching the latest currency data for EUR from the API and getting it as a string
-    let body = reqwest::blocking::get("https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/eur.json").unwrap().text().unwrap();
+	// Main loop
+	loop {
+		let mut amount_cur_source = 1.0;
 
-    // Parsing the JSON data into a CurrencyJsonDataset struct
-    let data = currency_json_parsing(&body)?;
+		let mut cur_code_source = String::new();
+		let mut cur_code_target = String::new();
 
-    // Main loop for user interaction
-    loop {
-        let mut value = 1.0;
-        let mut value_str = String::new();
-        let mut code = String::new();
 
-        println!("With the input of \"exit\", the program can be terminated at any time.");
-        println!("The exchange rates used are from {} (time unknown)!", data.date.format("%d.%m.%Y"));
+		let currencies: HashMap<String, String> = serde_json::from_str(
+			&*reqwest::blocking::get("https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies.json")
+				.unwrap().text().unwrap()).
+			expect("ERROR: Either there is no JSON at the used URL or the JSON could not get serialized to the internal representation!");
 
-        //To be converted Euro Amount - Loop
-        loop {
-            println!();
-            // Prompting user for the amount in EUR they want to convert
-            println!("Please enter the amount in Euros you want to convert: ");
 
-            value_str = String::new();
+		println!("With the input of \"exit\", the program can be terminated at any time.");
 
-            // Reading user input
-            if stdin().read_line(&mut value_str).is_ok()
-            {
-                value_str = value_str.trim().parse().unwrap();
 
-                exit_user(&*value_str);
+		loop {
+			cur_code_source = String::new();
 
-                // Parsing the user input to a floating point number
-                value = match value_str.parse() {
-                    Ok(v) => v,
-                    Err(_) => {
-                        println!("This is not an integer or float!");
-                        continue;
-                    }
-                };
+			cur_code_source = utils::cli_read_line("Please enter the code of the currency you want to use: ").1;
 
-                break;
-            } else {}
-        }
+			utils::check_for_exit_prompt(&cur_code_source);
 
-        //Currency Code - Loop
-        loop {
-            println!();
-            // Prompting user for the target currency code
-            println!("Please enter the code of the currency you want to convert to: ");
+			if currencies.contains_key(&cur_code_source) {
+				break
+			}
 
-            code = String::new();
+			println!();
+		}
 
-            // Reading the currency code from the user
-            match stdin().read_line(&mut code) {
-                Ok(_) => {
-                    code = code.trim().parse().unwrap();
 
-                    if data.eur.contains_key(&code) {
-                        break;
-                    }
+		//Getting the currency conversion modifiers for cur_code_source
+		let api_url = format!("https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/{}.json", &cur_code_source);
+		let data = utils::currency_json_parsing(&*reqwest::blocking::get(api_url).unwrap().text().unwrap()).unwrap();
 
-                    exit_user(&*value_str);
-                },
-                Err(_) => {},
-            }
-        }
-        println!();
 
-        // Displaying the conversion result to the user
-        println!("You will receive {} {} for {} Euros!", value_str, value * data.eur[&code], code);
-        pause();
+		println!("The exchange rates used are from {} (time unknown)!", data.date.format("%d.%m.%Y"));
+		println!();
 
-        // Clearing the console screen
-        print!("{}[2J", 27 as char);
-        stdin().read_line(&mut value_str);
-    }
-}
 
-// Function to parse the JSON string into a CurrencyJsonDataset struct
-fn currency_json_parsing(data: &str) -> Result<Box<CurrencyJsonDataset>> {
-    let cur_data_set: CurrencyJsonDataset = serde_json::from_str(data)?;
-    Ok(Box::new(cur_data_set))
-}
+		//To be converted Euro Amount - Loop
+		loop {
+			let msg = format!("Please enter the amount of {} you want to convert: ", currencies.get(&*cur_code_source).unwrap());
 
-// Function to pause the console until the user presses a key
-fn pause() {
-    write!(stdout(), "Press any key to continue...").unwrap();
-    stdout().flush().unwrap();
-    let _ = stdin().read(&mut [0u8]).unwrap();
-}
+			let mut amount_as_str = utils::cli_read_line(&*msg).1;
 
-fn exit_user(value_str: &str) {
-    if value_str.eq_ignore_ascii_case("exit") {
-        // Exiting the program if the user types "exit"
-        exit(0);
-    }
+			println!();
+
+			utils::check_for_exit_prompt(&*amount_as_str);
+
+			amount_cur_source = match amount_as_str.parse() {
+				Ok(v) => v,
+				Err(_) => {
+					println!("This is not an integer or float!");
+
+					println!();
+
+					continue;
+				}
+			};
+
+			if amount_cur_source < 0.0 {
+				continue;
+			}
+
+			break;
+		}
+
+
+		//Currency Code - Loop
+		loop {
+			let msg = "Please enter the code of the currency you want to convert to: ";
+
+			cur_code_target = utils::cli_read_line(msg).1;
+
+			println!();
+
+			utils::check_for_exit_prompt(&cur_code_target);
+
+			if currencies.contains_key(&cur_code_target) {
+				break;
+			}
+		}
+
+
+		// Displaying the conversion result to the user
+		println!("You will receive {} {} for {} {}!",
+		         amount_cur_source * data.exchange.get(&cur_code_source).unwrap()[&cur_code_target],
+		         currencies[&cur_code_target],
+		         amount_cur_source,
+		         currencies[&cur_code_source]);
+
+
+		utils::cli_pause();
+
+
+		// Clearing the console screen
+		print!("{}[2J", 27 as char);
+		stdin().read_line(&mut "".to_string());
+	}
 }
