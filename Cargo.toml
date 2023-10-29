@@ -1,5 +1,5 @@
 [package]
-name = "money_exchange_calc"
+name = "money_exchange_calc_cli"
 version = "0.9.1"
 edition = "2021"
 
